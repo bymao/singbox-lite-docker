@@ -50,24 +50,6 @@ RUN ARCH=$(uname -m) && \
     chmod +x /usr/local/bin/sing-box && \
     rm -f /tmp/sing-box.tar.gz
 
-# 安装 xray
-RUN ARCH=$(uname -m) && \
-    case "$ARCH" in \
-        x86_64|amd64)   XRAY_ARCH="64" ;; \
-        aarch64|arm64)  XRAY_ARCH="arm64-v8a" ;; \
-        armv7l)         XRAY_ARCH="arm32-v7a" ;; \
-        *)              XRAY_ARCH="64" ;; \
-    esac && \
-    wget -qO /tmp/xray.zip \
-        "https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-${XRAY_ARCH}.zip" && \
-    unzip -q /tmp/xray.zip -d /tmp/xray && \
-    mv /tmp/xray/xray /usr/local/bin/xray && \
-    chmod +x /usr/local/bin/xray && \
-    mkdir -p /usr/local/etc/xray && \
-    [ -f /tmp/xray/geoip.dat ]   && mv /tmp/xray/geoip.dat   /usr/local/etc/xray/ || true && \
-    [ -f /tmp/xray/geosite.dat ] && mv /tmp/xray/geosite.dat /usr/local/etc/xray/ || true && \
-    rm -rf /tmp/xray /tmp/xray.zip
-
 # 复制脚本到镜像
 COPY singbox.sh /usr/local/bin/sb
 COPY xray_manager.sh /usr/local/etc/sing-box/xray_manager.sh
@@ -79,7 +61,7 @@ RUN chmod +x /usr/local/bin/sb \
     /usr/local/etc/sing-box/parser.sh
 
 # 创建配置目录并写入依赖安装状态（避免容器内重复安装依赖）
-RUN mkdir -p /usr/local/etc/sing-box /usr/local/etc/xray && \
+RUN mkdir -p /usr/local/etc/sing-box && \
     echo "20260524-2" > /usr/local/etc/sing-box/dependencies.ok
 
 # 复制入口脚本
@@ -87,6 +69,6 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # 配置目录声明（供 docker-compose volume 挂载）
-VOLUME ["/usr/local/etc/sing-box", "/usr/local/etc/xray"]
+VOLUME ["/usr/local/etc/sing-box"]
 
 ENTRYPOINT ["/entrypoint.sh"]
