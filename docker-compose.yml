@@ -6,11 +6,10 @@ services:
     container_name: singbox-lite
     restart: unless-stopped
     privileged: true          # iptables / tun 等高权限操作所需
-    network_mode: host        # 使用宿主机网络，方便端口直通；如不需要可改为 bridge
+    network_mode: bridge
 
     # ────────────────────────────────────────────────
-    # 端口映射（仅在 network_mode: bridge 时生效）
-    # 首次使用前，请根据实际搭建的节点端口取消注释并修改
+    # 端口映射（bridge 模式下必须配置，请根据实际节点端口取消注释并修改）
     # ────────────────────────────────────────────────
     # ports:
     #   - "443:443/tcp"       # VLESS-Reality / TLS 节点
@@ -24,8 +23,6 @@ services:
     volumes:
       # sing-box 配置目录（持久化，迁移时只需复制 ./config 文件夹）
       - ./config/sing-box:/usr/local/etc/sing-box
-      # xray 配置目录
-      - ./config/xray:/usr/local/etc/xray
 
     environment:
       - TZ=Asia/Shanghai      # 时区，按需修改
