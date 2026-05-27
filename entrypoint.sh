@@ -48,7 +48,8 @@ start_xray() {
     fi
 
     # 检查是否有配置的 inbounds
-    inbound_count=$(jq '.inbounds | length' "$XRAY_CONFIG" 2>/dev/null || echo 0)
+    inbound_count=$(jq '.inbounds | length' "$XRAY_CONFIG" 2>/dev/null)
+    inbound_count=${inbound_count:-0}
     if [ "$inbound_count" -eq 0 ]; then
         echo "[xray] 暂无节点配置，跳过启动"
         return
@@ -93,10 +94,17 @@ watchdog() {
 }
 
 # 信号处理：优雅关闭
-trap 'echo "容器正在停止..."; \
-    [ -f "$PID_FILE" ] && kill "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null; \
-    [ -f "$XRAY_PID" ] && kill "$(cat "$XRAY_PID" 2>/dev/null)" 2>/dev/null; \
-    exit 0' TERM INT
+cleanup() {
+    echo "容器正在停止..."
+    if [ -f "$PID_FILE" ]; then
+        kill "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null || true
+    fi
+    if [ -f "$XRAY_PID" ]; then
+        kill "$(cat "$XRAY_PID" 2>/dev/null)" 2>/dev/null || true
+    fi
+    exit 0
+}
+trap cleanup TERM INT
 
 echo "=============================================="
 echo "  sing-box & Xray Docker 容器启动"
