@@ -76,10 +76,100 @@
 ### 支持的系统
 - Debian/Ubuntu (systemd)
 - Alpine Linux (OpenRC)
+- **Docker**（推荐，任意平台均可使用）
 
 ---
 
-## 📥 安装
+## 🐳 Docker 部署（推荐）
+
+> 使用 Docker 部署后，配置文件保存在宿主机的 `./config` 目录，迁移服务器时只需复制该目录并重启容器，**所有节点配置不会丢失**。
+
+### 前置要求
+
+- 已安装 [Docker](https://docs.docker.com/engine/install/) 和 [Docker Compose](https://docs.docker.com/compose/install/)
+
+### 快速开始
+
+#### 第一步：克隆仓库
+
+```bash
+git clone https://github.com/bymao/singbox-lite-docker.git
+cd singbox-lite-docker
+```
+
+#### 第二步：（可选）修改端口映射
+
+> 如果使用默认的 `network_mode: host`（宿主机网络模式），容器与宿主机共享网络，**无需配置端口映射**，脚本配置的节点端口直接在宿主机上生效。
+>
+> 如需改用 bridge 网络（隔离模式），请编辑 `docker-compose.yml`，注释掉 `network_mode: host`，并取消 `ports` 部分的注释，按实际节点端口进行映射：
+
+```yaml
+# docker-compose.yml 端口映射示例（bridge 模式）
+ports:
+  - "443:443/tcp"
+  - "443:443/udp"
+  - "8443:8443/tcp"
+  - "8443:8443/udp"
+```
+
+#### 第三步：构建并启动容器
+
+```bash
+# 构建镜像并在后台启动（首次构建会自动下载 sing-box 和 Xray 核心，需要几分钟）
+docker compose up -d --build
+```
+
+#### 第四步：进入容器配置节点
+
+```bash
+# 进入容器并启动配置脚本
+docker exec -it singbox-lite sb
+```
+
+脚本启动后进入交互式菜单，按照提示添加节点、查看分享链接等。配置完成后直接退出（`Ctrl+D` 或输入 `0`），容器会自动在后台运行已配置的节点。
+
+#### 后续管理
+
+```bash
+# 查看运行日志
+docker compose logs -f
+
+# 重启容器（迁移服务器后重启同样使用此命令）
+docker compose restart
+
+# 停止容器
+docker compose down
+
+# 重新进入配置菜单
+docker exec -it singbox-lite sb
+```
+
+### 服务器迁移
+
+1. 将宿主机上的 `./config` 目录整体复制到新服务器的同名路径
+2. 将 `docker-compose.yml` 也一同复制
+3. 在新服务器上执行：
+   ```bash
+   docker compose up -d --build
+   ```
+   容器启动后会自动读取已有配置并恢复所有节点。
+
+### 目录结构说明
+
+```
+singbox-lite-docker/
+├── config/                   # 持久化配置目录（自动创建，迁移时复制此目录）
+│   ├── sing-box/             # sing-box 配置（config.json、clash.yaml 等）
+│   └── xray/                 # Xray 配置（config.json 等）
+├── Dockerfile
+├── docker-compose.yml
+├── entrypoint.sh
+└── singbox.sh
+```
+
+---
+
+## 📥 传统安装（非 Docker）
 
 ### 交互式安装（推荐）
 
