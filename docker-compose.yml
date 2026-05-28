@@ -5,7 +5,7 @@ services:
     # image: singbox-lite:latest
     container_name: singbox-lite
     restart: unless-stopped
-    privileged: true          # iptables / tun 等高权限操作所需
+    # privileged: true         # 仅当使用 iptables / tun 等高权限操作时取消注释
     network_mode: bridge
 
     # ────────────────────────────────────────────────
