@@ -1,31 +1,40 @@
+# 启动：docker compose up -d --build
+# 配置：docker compose exec singbox sb
+# 首次使用在 sb 菜单中选择 [15] 安装 sing-box，或 [16] 安装 Xray。
+# 更新上游脚本：docker compose restart singbox（每次启动都会重新下载）。
+# 配置沿用 ./config/sing-box；核心和工具保存在 binaries 卷中，重建容器不会丢失。
+# 旧容器的核心未保存在卷中，迁移后需在菜单中重新安装一次。
 services:
   singbox:
     build: .
-    # 若已有预构建镜像，可替换 build 为：
-    # image: singbox-lite:latest
     container_name: singbox-lite
     restart: unless-stopped
-    # privileged: true         # 仅当使用 iptables / tun 等高权限操作时取消注释
+    init: true
     network_mode: bridge
 
-    # ────────────────────────────────────────────────
-    # 端口映射（bridge 模式下必须配置，请根据实际节点端口取消注释并修改）
-    # ────────────────────────────────────────────────
+    # bridge 模式下请根据节点实际监听端口添加映射，然后重建容器。
     # ports:
-    #   - "443:443/tcp"       # VLESS-Reality / TLS 节点
-    #   - "443:443/udp"       # Hysteria2 / TUIC 节点（QUIC）
+    #   - "443:443/tcp"
+    #   - "443:443/udp"
     #   - "8443:8443/tcp"
     #   - "8443:8443/udp"
-    #   - "2096:2096/tcp"
-    #   - "2096:2096/udp"
-    #   - "10000:10000/tcp"   # 自定义端口，按需添加
+
+    # nftables / TUN 功能按需开启；普通用户态转发无需此权限。
+    # cap_add:
+    #   - NET_ADMIN
+    # devices:
+    #   - /dev/net/tun:/dev/net/tun
 
     volumes:
-      # sing-box 配置目录（持久化，迁移时只需复制 ./config 文件夹）
       - ./config/sing-box:/usr/local/etc/sing-box
+      - ./config/xray:/usr/local/etc/xray
+      - binaries:/usr/local/bin
 
     environment:
-      - TZ=Asia/Shanghai      # 时区，按需修改
+      TZ: Asia/Shanghai
 
-    # 容器内存不足时的 OOM 保护（可选）
     # mem_limit: 256m
+
+# docker compose down 默认保留此卷；加 -v 会删除已安装的核心和工具。
+volumes:
+  binaries:
